@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 
+
 namespace Temosoft.Bitcoin.Blockchain
 {
     public abstract class BlockchainParser
