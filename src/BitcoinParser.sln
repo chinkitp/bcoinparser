@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitcoinParser.Loader", "BitcoinParser.Loader\BitcoinParser.Loader.csproj", "{DE6F7C99-F7FC-4377-9549-C2C14CC0E84C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BitcoinParser", "BitcoinParser\BitcoinParser.csproj", "{430E00D6-7A74-482B-B366-BE2C47E251A3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{DE6F7C99-F7FC-4377-9549-C2C14CC0E84C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE6F7C99-F7FC-4377-9549-C2C14CC0E84C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE6F7C99-F7FC-4377-9549-C2C14CC0E84C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{430E00D6-7A74-482B-B366-BE2C47E251A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{430E00D6-7A74-482B-B366-BE2C47E251A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{430E00D6-7A74-482B-B366-BE2C47E251A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{430E00D6-7A74-482B-B366-BE2C47E251A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
