@@ -10,6 +10,7 @@
             public const int TimeStamp = 0 + 4 + 32 + 32;
             public const int Difficulty = 0 + 4 + 32 + 32 + 4;
             public const int Nounce = 0 + 4 + 32 + 32 + 4 + 4;
+            public const int TxnCount = 0 + 4 + 32 + 32 + 4 + 4 + 4;
         }
 
         public static class Sizes

@@ -20,7 +20,7 @@ namespace BitcoinParser.Loader
             int blockCount = 0;
             var sw = new Stopwatch();
             sw.Start();
-            var blockInfos = new List<BlockInfo>();
+            var blockInfos = new List<Block>();
 
             foreach (var file in filesPath)
             {
@@ -33,7 +33,7 @@ namespace BitcoinParser.Loader
                     blockCount++;
                     var blockSize = BitConverter.ToUInt32(fileBytes, byteCursor + 4); // byteCursor + 4 = Block Size Information
 
-                    var block = new BlockInfo(blockSize);
+                    var block = new Block(blockSize);
                     Buffer.BlockCopy(fileBytes, byteCursor + 8, block.Raw, 0, (int)blockSize);
                     block.Init();
 
@@ -63,7 +63,7 @@ namespace BitcoinParser.Loader
             //parser.Parse(filesPath);
         }
 
-        public static async Task InsertAsync(IEnumerable<BlockInfo> blocks, CancellationToken ct = default(CancellationToken))
+        public static async Task InsertAsync(IEnumerable<Block> blocks, CancellationToken ct = default(CancellationToken))
         {
             using (var connection = new SqlConnection())
             {
@@ -73,18 +73,18 @@ namespace BitcoinParser.Loader
                 {
                     //var customers = Customer.Generate(1000000);
                     using (var enumerator = blocks.GetEnumerator())
-                    using (var customerReader = new ObjectDataReader<BlockInfo>(enumerator))
+                    using (var customerReader = new ObjectDataReader<Block>(enumerator))
                     {
-                        bulk.DestinationTableName = "BlockInfo";
-                        bulk.ColumnMappings.Add(nameof(BlockInfo.Id), "Id");
-                        bulk.ColumnMappings.Add(nameof(BlockInfo.VersionNumber), "VersionNumber");
-                        bulk.ColumnMappings.Add(nameof(BlockInfo.PreviousBlockHashAsString), "PreviousBlockHashAsString"); 
-                        bulk.ColumnMappings.Add(nameof(BlockInfo.MerkelRootHashAsString), "MerkelRootHashAsString");
-                        bulk.ColumnMappings.Add(nameof(BlockInfo.TimeStamp), "TimeStamp");
-                        bulk.ColumnMappings.Add(nameof(BlockInfo.Bits), "Bits");
-                        bulk.ColumnMappings.Add(nameof(BlockInfo.Nonce), "Nonce");
-                        bulk.ColumnMappings.Add(nameof(BlockInfo.TxnCount), "TxnCount");
-                        bulk.ColumnMappings.Add(nameof(BlockInfo.Size), "Size");
+                        bulk.DestinationTableName = "Blocks";
+                        bulk.ColumnMappings.Add(nameof(Block.Id), "Id");
+                        bulk.ColumnMappings.Add(nameof(Block.VersionNumber), "VersionNumber");
+                        bulk.ColumnMappings.Add(nameof(Block.PreviousBlockHashAsString), "PreviousBlockHashAsString"); 
+                        bulk.ColumnMappings.Add(nameof(Block.MerkelRootHashAsString), "MerkelRootHashAsString");
+                        bulk.ColumnMappings.Add(nameof(Block.TimeStamp), "TimeStamp");
+                        bulk.ColumnMappings.Add(nameof(Block.Bits), "Bits");
+                        bulk.ColumnMappings.Add(nameof(Block.Nonce), "Nonce");
+                        bulk.ColumnMappings.Add(nameof(Block.TxnCount), "TxnCount");
+                        bulk.ColumnMappings.Add(nameof(Block.Size), "Size");
 
 
                         bulk.EnableStreaming = true;
@@ -111,20 +111,6 @@ namespace BitcoinParser.Loader
             }
 
             return false;
-        }
-    }
-
-
-
-    internal class BlockchainProcessor : BlockchainParser
-    {
-        private long _blks;
-
-        protected override void ProcessBlock(Block block)
-        {
-            //Console.WriteLine(_blks);
-            var i = block.PreviousBlockHash;
-            //var trn = block.Transactions.LongCount();
         }
     }
 }

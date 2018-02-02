@@ -9,8 +9,4 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.4.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\BitcoinParser\BitcoinParser.csproj" />
-  </ItemGroup>
-
 </Project>

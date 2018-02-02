@@ -1,4 +1,4 @@
-﻿CREATE TABLE dbo.BlockInfo
+﻿CREATE TABLE dbo.Blocks
 (
 	Id							UNIQUEIDENTIFIER PRIMARY KEY NOT NULL, 
 	VersionNumber				INT NOT NULL, 
@@ -18,6 +18,7 @@
 GO
 /*
 DROP TABLE dbo.blockInfo
+SELECT * FROM dbo.blocks
 
 Field Size	Description	Data type	Comments
 4	version	int32_t	Block version information (note, this is signed)

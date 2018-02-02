@@ -1,14 +1,15 @@
 ﻿using System;
 using Temosoft.Bitcoin.Blockchain;
 using System.Linq;
+using System.IO;
 
 namespace BitcoinParser.Loader
 {
-    public class BlockInfo
+    public class Block
     {
         public byte[] Raw { get; private set; }
         public Guid Id { get; private set; }
-        public BlockInfo(uint size)
+        public Block(uint size)
         {
             Raw = new byte[size];
             Size = (int) size;
@@ -23,6 +24,7 @@ namespace BitcoinParser.Loader
             SetTimeStamp();
             SetBits();
             SetNonce();
+            SetTxnCount();
         }
            
 
@@ -72,21 +74,39 @@ namespace BitcoinParser.Loader
             Nonce =  BitConverter.ToUInt32(Raw, BlockConstants.Offsets.Nounce);
         }
 
-        public int TxnCount
+        public long TxnCount { get; private set; }
+        private void SetTxnCount()
         {
-            get { return 0; }
+            var t = Raw[BlockConstants.Offsets.TxnCount];
+            if (t < 0xfd)
+            {
+                TxnCount = t;
+            }
+            else if (t == 0xfd)
+            {
+                TxnCount = BitConverter.ToInt16(Raw, BlockConstants.Offsets.TxnCount);
+            }
+            else if (t == 0xfe)
+            {
+                TxnCount = BitConverter.ToInt32(Raw, BlockConstants.Offsets.TxnCount);
+            }
+            else if (t == 0xff)
+            {
+                TxnCount = BitConverter.ToInt64(Raw, BlockConstants.Offsets.TxnCount);
+            }
+            else
+            {
+                throw new InvalidDataException("Reading Transaction Count");
+            }
+            
         }
 
 
-        public int Size { get; private set; } 
-        
-
-        //public byte[] PreviousBlockHash { get; internal set; }
-        //public byte[] MerkleRoot { get; internal set; }
-        //public uint TimeStamp { get; internal set; }
-        //public uint Bits { get; internal set; }
-        //public uint Nonce { get; internal set; }
+        public int Size { get; private set; }       
         public Transaction[] Transactions { get; internal set; }
-        //public uint LockTime { get; internal set; }
+        private void SetTransactions()
+        {
+
+        }
     }
 }
