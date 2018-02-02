@@ -4,9 +4,9 @@
 	VersionNumber				INT NOT NULL, 
 	PreviousBlockHashAsString	VARCHAR(256) NOT NULL, 
 	MerkelRootHashAsString		VARCHAR(256) NOT NULL, 
-	[TimeStamp]					INT NOT NULL,
-	Bits						INT NOT NULL,
-	Nonce						INT NOT NULL, 
+	[TimeStamp]					BIGINT NOT NULL,
+	Bits						BIGINT NOT NULL,
+	Nonce						BIGINT NOT NULL, 
 	TxnCount					INT NOT NULL,
 
 	--Other helpful fields
@@ -17,7 +17,7 @@
 )
 GO
 /*
-DROP TABLE blocks
+DROP TABLE dbo.blockInfo
 
 Field Size	Description	Data type	Comments
 4	version	int32_t	Block version information (note, this is signed)

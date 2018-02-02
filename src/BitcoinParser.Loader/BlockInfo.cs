@@ -54,22 +54,22 @@ namespace BitcoinParser.Loader
             MerkelRootHashAsString = BitConverter.ToString(hash).Replace("-", string.Empty);
         }
 
-        public int TimeStamp { get; private set; }
+        public long TimeStamp { get; private set; }
         private void SetTimeStamp()
         {
-            TimeStamp = BitConverter.ToInt32(Raw, BlockConstants.Offsets.TimeStamp);
+            TimeStamp = BitConverter.ToUInt32(Raw, BlockConstants.Offsets.TimeStamp);
         }
 
-        public int Bits { get; private set; }
+        public long Bits { get; private set; }
         private void SetBits()
         {
-            Bits = BitConverter.ToInt32(Raw, BlockConstants.Offsets.Difficulty);
+            Bits = BitConverter.ToUInt32(Raw, BlockConstants.Offsets.Difficulty);
         }
 
-        public int Nonce { get; private set; }
+        public long Nonce { get; private set; }
         private void SetNonce()
         {
-            Nonce = BitConverter.ToInt32(Raw, BlockConstants.Offsets.Nounce);
+            Nonce =  BitConverter.ToUInt32(Raw, BlockConstants.Offsets.Nounce);
         }
 
         public int TxnCount
