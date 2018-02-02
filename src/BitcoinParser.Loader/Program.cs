@@ -2,12 +2,15 @@
 using System.Diagnostics;
 using System.IO;
 using Temosoft.Bitcoin.Blockchain;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Collections;
+using System.Data.SqlClient;
 
 namespace BitcoinParser.Loader
 {
+
     class Program
     {
         static void Main(string[] args)
@@ -17,10 +20,12 @@ namespace BitcoinParser.Loader
             int blockCount = 0;
             var sw = new Stopwatch();
             sw.Start();
+            var blockInfos = new List<BlockInfo>();
 
-            Parallel.ForEach(filesPath, (file) =>
+            foreach (var file in filesPath)
             {
-                var fileBytes = File.ReadAllBytes(file);
+                
+                var fileBytes = File.ReadAllBytesAsync(file).Result;
                 int byteCursor = 0;
 
                 while (IsMagic(fileBytes, byteCursor))
@@ -28,37 +33,26 @@ namespace BitcoinParser.Loader
                     blockCount++;
                     var blockSize = BitConverter.ToUInt32(fileBytes, byteCursor + 4); // byteCursor + 4 = Block Size Information
 
-                    using (var ms = new MemoryStream(fileBytes, byteCursor + 8, (int)blockSize))
-                    {
-                        using (var reader = new BinaryReader(ms))
-                        {
-                            //TODO CPATEL: still need to understand this bit of code. 
-                            var block = new Block(reader.BaseStream);
-                            block.HeaderLength = reader.ReadUInt32();
-                            reader.BaseStream.Seek(block.HeaderLength, SeekOrigin.Current);
-                            var i = block.PreviousBlockHash;
-                            var r = block.Nonce;
-                            foreach (var trn in block.Transactions)
-                            {
-                                var inputs = trn.Inputs;
-                                var outputs = trn.Outputs;
-                                foreach (var input in inputs)
-                                {
-                                    var g = input.TransactionHash;
-                                }
-                                foreach (var output in outputs)
-                                {
-                                    var val = output.Value;
-                                }                         
-                            }
-                        }
-                    }
+                    var block = new BlockInfo(blockSize);
+                    Buffer.BlockCopy(fileBytes, byteCursor + 8, block.Raw, 0, (int)blockSize);
+                    block.Init();
+
+                    ////var b = block.MerkelRootHashAsString;
+                    ////var c = block.Nonce;
+                    ////var d = block.Time;
+                    ////var e = block.Difficulty;
+                    blockInfos.Add(block);
+                    
+
 
                     byteCursor = byteCursor + 8 + (int)blockSize;//byteCursor + 8 = Move by Magic Number + Size Info
 
                 }
 
-            });
+
+            }
+
+            InsertAsync(blockInfos).Wait();
 
             sw.Stop();
             Console.WriteLine(blockCount);
@@ -67,6 +61,41 @@ namespace BitcoinParser.Loader
 
             //var parser = new BlockchainProcessor();
             //parser.Parse(filesPath);
+        }
+
+        public static async Task InsertAsync(IEnumerable<BlockInfo> blocks, CancellationToken ct = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection())
+            {
+                connection.ConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\chinkitpatel\source\repos\cp\bcoinparser\src\BitcoinParser.Loader\App_Data\Bitcoin.mdf;Integrated Security=True;Connect Timeout=30";
+                await connection.OpenAsync(ct);
+                using (var bulk = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, null))
+                {
+                    //var customers = Customer.Generate(1000000);
+                    using (var enumerator = blocks.GetEnumerator())
+                    using (var customerReader = new ObjectDataReader<BlockInfo>(enumerator))
+                    {
+                        bulk.DestinationTableName = "BlockInfo";
+                        bulk.ColumnMappings.Add(nameof(BlockInfo.Id), "Id");
+                        bulk.ColumnMappings.Add(nameof(BlockInfo.VersionNumber), "VersionNumber");
+                        bulk.ColumnMappings.Add(nameof(BlockInfo.PreviousBlockHashAsString), "PreviousBlockHashAsString"); 
+                        bulk.ColumnMappings.Add(nameof(BlockInfo.MerkelRootHashAsString), "MerkelRootHashAsString");
+                        bulk.ColumnMappings.Add(nameof(BlockInfo.TimeStamp), "TimeStamp");
+                        bulk.ColumnMappings.Add(nameof(BlockInfo.Bits), "Bits");
+                        bulk.ColumnMappings.Add(nameof(BlockInfo.Nonce), "Nonce");
+                        bulk.ColumnMappings.Add(nameof(BlockInfo.TxnCount), "TxnCount");
+                        bulk.ColumnMappings.Add(nameof(BlockInfo.Size), "Size");
+
+
+                        bulk.EnableStreaming = true;
+                        bulk.BatchSize = 10000;
+                        bulk.NotifyAfter = 1000;
+                        bulk.SqlRowsCopied += (sender, e) => Console.WriteLine("RowsCopied: " + e.RowsCopied);
+
+                        await bulk.WriteToServerAsync(customerReader, ct);
+                    }
+                }
+            }
         }
 
         private static bool IsMagic(byte[] bytes, int startSeq)
