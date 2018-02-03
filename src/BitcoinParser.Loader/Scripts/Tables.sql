@@ -16,8 +16,42 @@
 	RelayedBy					VARCHAR(28) NULL
 )
 GO
+
+CREATE TABLE dbo.Transactions
+(
+	Id							UNIQUEIDENTIFIER PRIMARY KEY NOT NULL, 
+	BlockId						UNIQUEIDENTIFIER NOT NULL,
+	VersionNumber				BIGINT NULL,
+)
+GO
+
+CREATE TABLE dbo.Inputs 
+(
+	Id							UNIQUEIDENTIFIER PRIMARY KEY NOT NULL, 
+	TransactionId				UNIQUEIDENTIFIER NOT NULL,
+	VersionNumber				BIGINT NULL,
+	TransactionHash				VARCHAR(256) NOT NULL, 
+	TransactionIndex			BIGINT NOT NULL, 
+	Script						VARCHAR(3000) NOT NULL, 
+	SequenceNumber			    BIGINT NOT NULL
+)
+GO
+
+CREATE TABLE dbo.Outputs 
+(
+	Id							UNIQUEIDENTIFIER PRIMARY KEY NOT NULL, 
+	TransactionId				UNIQUEIDENTIFIER NOT NULL,
+	[Value]						BIGINT NULL,
+	Script						VARCHAR(max) NOT NULL
+)
+GO
+
+
 /*
 DROP TABLE dbo.blocks
+DROP TABLE dbo.Transactions
+DROP TABLE dbo.Inputs 
+DROP TABLE dbo.Outputs
 SELECT * FROM dbo.blocks
 
 Field Size	Description	Data type	Comments

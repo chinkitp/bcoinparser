@@ -140,7 +140,7 @@ namespace BitcoinParser.Loader
                         for (var oi = 0; oi < outputCount; oi++)
                         {
                             var output = new Output(t);
-                            output.Value = reader.ReadUInt64();
+                            output.Value = (long) reader.ReadUInt64();
                             output.Script = reader.ReadStringAsByteArray().ToHashString();
                             t.Outputs[oi] = output;
                         }

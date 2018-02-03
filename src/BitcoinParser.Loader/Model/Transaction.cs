@@ -14,7 +14,7 @@ namespace Temosoft.Bitcoin.Blockchain
 
         public Guid Id { get; private set; }
         public Guid BlockId { get; private set; }
-        public uint VersionNumber;
+        public long VersionNumber { get;  set; }
         public Input[] Inputs;
         public Output[] Outputs;
     }

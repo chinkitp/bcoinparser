@@ -12,7 +12,7 @@ namespace Temosoft.Bitcoin.Blockchain
 
         public Guid Id { get; private set; }
         public Guid TransactionId { get; private set; }
-        public ulong Value;
-        public string Script;
+        public long Value { get;  set; }
+        public string Script { get;  set; }
     }
 }

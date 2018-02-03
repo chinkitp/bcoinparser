@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace BitcoinParser.Loader
 {
@@ -82,15 +83,80 @@ namespace BitcoinParser.Loader
                         bulk.ColumnMappings.Add(nameof(Block.TxnCount), "TxnCount");
                         bulk.ColumnMappings.Add(nameof(Block.Size), "Size");
 
-
                         bulk.EnableStreaming = true;
                         bulk.BatchSize = 10000;
-                        bulk.NotifyAfter = 1000;
-                        bulk.SqlRowsCopied += (sender, e) => Console.WriteLine("RowsCopied: " + e.RowsCopied);
+                        bulk.NotifyAfter = 100000;
+                        bulk.SqlRowsCopied += (sender, e) => Console.WriteLine("Blocks Inserted : " + e.RowsCopied);
 
                         await bulk.WriteToServerAsync(customerReader, ct);
                     }
                 }
+
+                using (var bulk = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, null))
+                {
+                    using (var enumerator = blocks.SelectMany(b => b.Transactions).GetEnumerator())
+                    using (var transactionReader = new ObjectDataReader<Transaction>(enumerator))
+                    {
+                        bulk.DestinationTableName = "Transactions";
+                        bulk.ColumnMappings.Add(nameof(Transaction.Id), "Id");
+                        bulk.ColumnMappings.Add(nameof(Transaction.BlockId), "BlockId");
+                        bulk.ColumnMappings.Add(nameof(Transaction.VersionNumber), "VersionNumber");
+
+                        bulk.EnableStreaming = true;
+                        bulk.BatchSize = 50000;
+                        bulk.NotifyAfter = 100000;
+                        bulk.SqlRowsCopied += (sender, e) => Console.WriteLine("Transactions Inserted : " + e.RowsCopied);
+
+                        await bulk.WriteToServerAsync(transactionReader, ct);
+                    }
+                }
+
+                using (var bulk = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, null))
+                {
+                    using (var enumerator = blocks.SelectMany(b => b.Transactions).SelectMany(t => t.Inputs).GetEnumerator())
+                    using (var inputReader = new ObjectDataReader<Input>(enumerator))
+                    {
+                        bulk.DestinationTableName = "Inputs";
+                        bulk.ColumnMappings.Add(nameof(Input.Id), "Id");
+                        bulk.ColumnMappings.Add(nameof(Input.TransactionId), "TransactionId");
+                        bulk.ColumnMappings.Add(nameof(Input.TransactionHash), "TransactionHash");
+                        bulk.ColumnMappings.Add(nameof(Input.SequenceNumber), "SequenceNumber");
+                        bulk.ColumnMappings.Add(nameof(Input.Script), "Script");
+                        bulk.ColumnMappings.Add(nameof(Input.TransactionIndex), "TransactionIndex");
+                        
+
+                        bulk.EnableStreaming = true;
+                        bulk.BatchSize = 50000;
+                        bulk.NotifyAfter = 100000;
+                        bulk.SqlRowsCopied += (sender, e) => Console.WriteLine("Inputs Inserted : " + e.RowsCopied);
+
+                        await bulk.WriteToServerAsync(inputReader, ct);
+                    }
+                }
+
+                using (var bulk = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, null))
+                {
+                    using (var enumerator = blocks.SelectMany(b => b.Transactions).SelectMany(t => t.Outputs).GetEnumerator())
+                    using (var inputReader = new ObjectDataReader<Output>(enumerator))
+                    {
+                        bulk.DestinationTableName = "Outputs";
+                        bulk.ColumnMappings.Add(nameof(Output.Id), "Id");
+                        bulk.ColumnMappings.Add(nameof(Output.TransactionId), "TransactionId");
+                        bulk.ColumnMappings.Add(nameof(Output.Value), "Value");
+                        bulk.ColumnMappings.Add(nameof(Output.Script), "Script");
+
+
+
+                        bulk.EnableStreaming = true;
+                        bulk.BatchSize = 50000;
+                        bulk.NotifyAfter = 100000;
+                        bulk.SqlRowsCopied += (sender, e) => Console.WriteLine("Outputs Inserted : " + e.RowsCopied);
+
+                        await bulk.WriteToServerAsync(inputReader, ct);
+                    }
+                }
+
+
             }
         }
 
