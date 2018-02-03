@@ -18,14 +18,15 @@ namespace BitcoinParser.Loader
         {
             var blocksFolder = @".\..\..\..\..\Samples\";
             var filesPath = Directory.GetFiles(blocksFolder, "blk*.dat", SearchOption.TopDirectoryOnly);
+            Console.WriteLine($"----- No of files found : {filesPath.Count()}");
             int blockCount = 0;
             var sw = new Stopwatch();
             sw.Start();
             var blockInfos = new List<Block>();
 
-            Parallel.ForEach(filesPath, file => {
-
-                var fileBytes = File.ReadAllBytes(file);
+            foreach (var file in filesPath)
+            {
+                var fileBytes = File.ReadAllBytesAsync(file).Result;
                 int byteCursor = 0;
 
                 while (IsMagic(fileBytes, byteCursor))
@@ -42,33 +43,34 @@ namespace BitcoinParser.Loader
                     byteCursor = byteCursor + 8 + (int)blockSize;//byteCursor + 8 = Move by Magic Number + Size Info
 
                 }
-            });
+            }
 
+            Console.WriteLine($"Reading Files Completed {sw.ElapsedMilliseconds} ms");
+            
             Parallel.ForEach(blockInfos, block =>
             {
                 block.Init();
             });
 
+            Console.WriteLine($"Block Parsing Completed {sw.ElapsedMilliseconds} ms");
+
             InsertAsync(blockInfos).Wait();
 
             sw.Stop();
             Console.WriteLine(blockCount);
-            Console.WriteLine(sw.ElapsedMilliseconds);
-
-
-            //var parser = new BlockchainProcessor();
-            //parser.Parse(filesPath);
+            Console.WriteLine($"Process completed {sw.ElapsedMilliseconds} ms");
         }
 
         public static async Task InsertAsync(IEnumerable<Block> blocks, CancellationToken ct = default(CancellationToken))
         {
             using (var connection = new SqlConnection())
             {
-                connection.ConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\chinkitpatel\source\repos\cp\bcoinparser\src\BitcoinParser.Loader\App_Data\Bitcoin.mdf;Integrated Security=True;Connect Timeout=30";
+                Console.WriteLine("Starting Bulk Insert");
+                connection.ConnectionString = @"Server=.;Database=Bitcoin;Trusted_Connection=True;";
                 await connection.OpenAsync(ct);
                 using (var bulk = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, null))
                 {
-                    //var customers = Customer.Generate(1000000);
+                    
                     using (var enumerator = blocks.GetEnumerator())
                     using (var customerReader = new ObjectDataReader<Block>(enumerator))
                     {
@@ -103,7 +105,7 @@ namespace BitcoinParser.Loader
                         bulk.ColumnMappings.Add(nameof(Transaction.VersionNumber), "VersionNumber");
 
                         bulk.EnableStreaming = true;
-                        bulk.BatchSize = 50000;
+                        bulk.BatchSize = 10000;
                         bulk.NotifyAfter = 100000;
                         bulk.SqlRowsCopied += (sender, e) => Console.WriteLine("Transactions Inserted : " + e.RowsCopied);
 
@@ -126,7 +128,7 @@ namespace BitcoinParser.Loader
                         
 
                         bulk.EnableStreaming = true;
-                        bulk.BatchSize = 50000;
+                        bulk.BatchSize = 10000;
                         bulk.NotifyAfter = 100000;
                         bulk.SqlRowsCopied += (sender, e) => Console.WriteLine("Inputs Inserted : " + e.RowsCopied);
 
@@ -145,10 +147,8 @@ namespace BitcoinParser.Loader
                         bulk.ColumnMappings.Add(nameof(Output.Value), "Value");
                         bulk.ColumnMappings.Add(nameof(Output.Script), "Script");
 
-
-
                         bulk.EnableStreaming = true;
-                        bulk.BatchSize = 50000;
+                        bulk.BatchSize = 10000;
                         bulk.NotifyAfter = 100000;
                         bulk.SqlRowsCopied += (sender, e) => Console.WriteLine("Outputs Inserted : " + e.RowsCopied);
 

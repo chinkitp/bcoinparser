@@ -1,9 +1,23 @@
-﻿CREATE TABLE dbo.Blocks
+﻿Use Master;
+GO 
+
+IF EXISTS (SELECT 1 FROM sys.databases where name = 'Bitcoin')
+BEGIN 
+	DROP DATABASE Bitcoin;
+END
+
+CREATE DATABASE Bitcoin; 
+GO
+USE Bitcoin
+GO
+
+GO
+CREATE TABLE dbo.Blocks
 (
 	Id							UNIQUEIDENTIFIER PRIMARY KEY NOT NULL, 
 	VersionNumber				INT NOT NULL, 
-	PreviousBlockHashAsString	VARCHAR(256) NOT NULL, 
-	MerkelRootHashAsString		VARCHAR(256) NOT NULL, 
+	PreviousBlockHashAsString	NVARCHAR(256) NOT NULL, 
+	MerkelRootHashAsString		NVARCHAR(256) NOT NULL, 
 	[TimeStamp]					BIGINT NOT NULL,
 	Bits						BIGINT NOT NULL,
 	Nonce						BIGINT NOT NULL, 
@@ -13,7 +27,7 @@
 	Height						INT NULL,
 	Size						INT NOT NULL, 
 	ReceivedTime				DATETIME2 NULL,
-	RelayedBy					VARCHAR(28) NULL
+	RelayedBy					NVARCHAR(28) NULL
 )
 GO
 
@@ -30,9 +44,9 @@ CREATE TABLE dbo.Inputs
 	Id							UNIQUEIDENTIFIER PRIMARY KEY NOT NULL, 
 	TransactionId				UNIQUEIDENTIFIER NOT NULL,
 	VersionNumber				BIGINT NULL,
-	TransactionHash				VARCHAR(256) NOT NULL, 
+	TransactionHash				NVARCHAR(256) NOT NULL, 
 	TransactionIndex			BIGINT NOT NULL, 
-	Script						VARCHAR(3000) NOT NULL, 
+	Script						NVARCHAR(3000) NOT NULL, 
 	SequenceNumber			    BIGINT NOT NULL
 )
 GO
@@ -42,7 +56,7 @@ CREATE TABLE dbo.Outputs
 	Id							UNIQUEIDENTIFIER PRIMARY KEY NOT NULL, 
 	TransactionId				UNIQUEIDENTIFIER NOT NULL,
 	[Value]						BIGINT NULL,
-	Script						VARCHAR(max) NOT NULL
+	Script						NVARCHAR(max) NOT NULL
 )
 GO
 
