@@ -22,10 +22,9 @@ namespace BitcoinParser.Loader
             sw.Start();
             var blockInfos = new List<Block>();
 
-            foreach (var file in filesPath)
-            {
-                
-                var fileBytes = File.ReadAllBytesAsync(file).Result;
+            Parallel.ForEach(filesPath, file => {
+
+                var fileBytes = File.ReadAllBytes(file);
                 int byteCursor = 0;
 
                 while (IsMagic(fileBytes, byteCursor))
@@ -35,22 +34,19 @@ namespace BitcoinParser.Loader
 
                     var block = new Block(blockSize);
                     Buffer.BlockCopy(fileBytes, byteCursor + 8, block.Raw, 0, (int)blockSize);
-                    block.Init();
+                    //block.Init();
 
-                    ////var b = block.MerkelRootHashAsString;
-                    ////var c = block.Nonce;
-                    ////var d = block.Time;
-                    ////var e = block.Difficulty;
                     blockInfos.Add(block);
-                    
-
 
                     byteCursor = byteCursor + 8 + (int)blockSize;//byteCursor + 8 = Move by Magic Number + Size Info
 
                 }
+            });
 
-
-            }
+            Parallel.ForEach(blockInfos, block =>
+            {
+                block.Init();
+            });
 
             InsertAsync(blockInfos).Wait();
 

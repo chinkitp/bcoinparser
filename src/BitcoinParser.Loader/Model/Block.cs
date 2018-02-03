@@ -24,7 +24,7 @@ namespace BitcoinParser.Loader
             SetTimeStamp();
             SetBits();
             SetNonce();
-            SetTxnCount();
+            SetTransactions();
         }
            
 
@@ -75,38 +75,81 @@ namespace BitcoinParser.Loader
         }
 
         public long TxnCount { get; private set; }
-        private void SetTxnCount()
-        {
-            var t = Raw[BlockConstants.Offsets.TxnCount];
-            if (t < 0xfd)
-            {
-                TxnCount = t;
-            }
-            else if (t == 0xfd)
-            {
-                TxnCount = BitConverter.ToInt16(Raw, BlockConstants.Offsets.TxnCount);
-            }
-            else if (t == 0xfe)
-            {
-                TxnCount = BitConverter.ToInt32(Raw, BlockConstants.Offsets.TxnCount);
-            }
-            else if (t == 0xff)
-            {
-                TxnCount = BitConverter.ToInt64(Raw, BlockConstants.Offsets.TxnCount);
-            }
-            else
-            {
-                throw new InvalidDataException("Reading Transaction Count");
-            }
+        //private void SetTxnCount()
+        //{
+        //    var t = Raw[BlockConstants.Offsets.TxnCount];
+        //    if (t < 0xfd)
+        //    {
+        //        TxnCount = t;
+        //    }
+        //    else if (t == 0xfd)
+        //    {
+        //        TxnCount = BitConverter.ToInt16(Raw, BlockConstants.Offsets.TxnCount);
+        //    }
+        //    else if (t == 0xfe)
+        //    {
+        //        TxnCount = BitConverter.ToInt32(Raw, BlockConstants.Offsets.TxnCount);
+        //    }
+        //    else if (t == 0xff)
+        //    {
+        //        TxnCount = BitConverter.ToInt64(Raw, BlockConstants.Offsets.TxnCount);
+        //    }
+        //    else
+        //    {
+        //        throw new InvalidDataException("Reading Transaction Count");
+        //    }
             
-        }
+        //}
 
 
         public int Size { get; private set; }       
         public Transaction[] Transactions { get; internal set; }
+        public long LockTime { get; private set; }
+
         private void SetTransactions()
         {
+            using (var ms = new MemoryStream(Raw, BlockConstants.Offsets.TxnCount, Raw.Length - BlockConstants.Offsets.TxnCount))
+            {
+                using (var reader = new BinaryReader(ms))
+                {
+                    TxnCount = reader.ReadVarInt();
+                    Transactions = new Transaction[TxnCount];
 
+                    for (var ti = 0; ti < TxnCount; ti++)
+                    {
+                        var t = new Transaction(this);
+                        t.VersionNumber = reader.ReadUInt32();
+
+                        var inputCount = reader.ReadVarInt();
+                        t.Inputs = new Input[inputCount];
+
+
+                        for (var ii = 0; ii < inputCount; ii++)
+                        {
+                            var input = new Input(t);
+                            input.TransactionHash = BitConverter.ToString(reader.ReadHashAsByteArray()).Replace("-", string.Empty);
+                            input.TransactionIndex = reader.ReadUInt32();
+                            input.Script = reader.ReadStringAsByteArray().ToHashString();
+                            input.SequenceNumber = reader.ReadUInt32();
+                            t.Inputs[ii] = input;
+                        }
+
+                        var outputCount = reader.ReadVarInt();
+                        t.Outputs = new Output[outputCount];
+
+                        for (var oi = 0; oi < outputCount; oi++)
+                        {
+                            var output = new Output(t);
+                            output.Value = reader.ReadUInt64();
+                            output.Script = reader.ReadStringAsByteArray().ToHashString();
+                            t.Outputs[oi] = output;
+                        }
+                        LockTime = reader.ReadUInt32();
+                        Transactions[ti] = t;
+                    }
+                }
+
+            }
         }
     }
 }

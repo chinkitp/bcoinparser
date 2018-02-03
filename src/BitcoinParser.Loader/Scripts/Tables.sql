@@ -17,7 +17,7 @@
 )
 GO
 /*
-DROP TABLE dbo.blockInfo
+DROP TABLE dbo.blocks
 SELECT * FROM dbo.blocks
 
 Field Size	Description	Data type	Comments
